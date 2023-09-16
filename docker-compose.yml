@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  web:
+    image: ${REGISTRY_LOCATION}/web:latest
+    ports: 
+      - "41960:8080"
+    environment:
+      - BASE_URL=http://localhost:8081
+
+  builder:
+    image: ${REGISTRY_LOCATION}/organizerserver:latest
+    ports:
+      - "8081:8080"
+    environment:
+      - OBSIDIAN_VAULT_REPO_LOCATION=/app/vault
+    volumes:
+      - C:\Users\Alan\Documents\Obsidian Vault\Organizer:/app/vault
