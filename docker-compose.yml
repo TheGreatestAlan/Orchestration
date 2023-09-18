@@ -9,7 +9,7 @@ services:
     environment:
       - BASE_URL=http://localhost:8081
 
-  builder:
+  organizerserver:
     image: ${REGISTRY_LOCATION}/organizerserver:latest
     ports:
       - "8081:8080"
