@@ -1,5 +1,6 @@
 version: '3'
 
+
 services:
   web:
     image: ${REGISTRY_LOCATION}/web:latest
@@ -15,4 +16,4 @@ services:
     environment:
       - OBSIDIAN_VAULT_REPO_LOCATION=/app/vault
     volumes:
-      - C:\Users\Alan\Documents\Obsidian Vault\Organizer:/app/vault
+      - ${VAULT_LOCATION}:/app/vault
