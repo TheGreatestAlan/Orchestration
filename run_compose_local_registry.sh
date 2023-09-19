@@ -18,23 +18,23 @@ if [ -z "$ORGANIZER_SERVER_PORT" ]; then
     export ORGANIZER_SERVER_PORT
 fi
 
-# Set default value for ORGANIZER_SERVER_LOCATION
-ORGANIZER_SERVER_LOCATION="http://localhost:$ORGANIZER_SERVER_PORT"
-export ORGANIZER_SERVER_LOCATION
+# Set default value for BASE_URL
+BASE_URL="http://localhost:$ORGANIZER_SERVER_PORT"
+export BASE_URL
 
-# Check for flags and set ORGANIZER_SERVER_LOCATION accordingly
+# Check for flags and set BASE_URL accordingly
 if [ "$1" == "local" ]; then
     # Default value is already set
     :
 elif [ "$1" == "internal" ]; then
     # Get the internal IP address
     ip=$(hostname -I | awk '{print $1}')
-    ORGANIZER_SERVER_LOCATION="http://$ip:$ORGANIZER_SERVER_PORT"
-    export ORGANIZER_SERVER_LOCATION
+    BASE_URL="http://$ip:$ORGANIZER_SERVER_PORT"
+    export BASE_URL
 elif [ "$1" == "external" ]; then
     read -p "Enter the external url: " ip
-    ORGANIZER_SERVER_LOCATION="$ip"
-    export ORGANIZER_SERVER_LOCATION
+    BASE_URL="$ip"
+    export BASE_URL
 fi
 
 # Run docker-compose up

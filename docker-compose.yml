@@ -5,14 +5,14 @@ services:
   web:
     image: ${REGISTRY_LOCATION}/web:latest
     ports: 
-      - "41960:8080"
+      - "${WEB_PORT}:8080"
     environment:
-      - BASE_URL=http://localhost:8081
+      - BASE_URL=${BASE_URL}
 
   organizerserver:
     image: ${REGISTRY_LOCATION}/organizerserver:latest
     ports:
-      - "8081:8080"
+      - "${ORGANIZER_SERVER_PORT}:8080"
     environment:
       - OBSIDIAN_VAULT_REPO_LOCATION=/app/vault
     volumes:
