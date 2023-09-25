@@ -13,4 +13,4 @@ export ORGANIZER_SERVER_PORT="8081"
 export WEB_PORT="41960"
 
 
-./run_compose_local_registry.sh $1
+"$(dirname "$0")"/run_compose_local_registry.sh "$1"

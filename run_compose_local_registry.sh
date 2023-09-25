@@ -29,8 +29,17 @@ if [ "$1" == "local" ]; then
 elif [ "$1" == "internal" ]; then
     # Get the internal IP address
     ip=$(hostname -I | awk '{print $1}')
+
+    # Wait until an IP address is obtained
+    while [ -z "$ip" ]; do
+        sleep 5
+        ip=$(hostname -I | awk '{print $1}')
+    done
+
     BASE_URL="http://$ip:$ORGANIZER_SERVER_PORT"
-    export BASE_URL
+    echo $BASE_URL
+    export BASE_URL 
+
 elif [ "$1" == "external" ]; then
     read -p "Enter the external url: " ip
     BASE_URL="$ip"
@@ -38,5 +47,5 @@ elif [ "$1" == "external" ]; then
 fi
 
 # Run docker-compose up
-docker compose up
+docker compose -f "$(dirname "$0")"/docker-compose.yml up 
 
