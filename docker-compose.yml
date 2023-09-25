@@ -17,3 +17,14 @@ services:
       - OBSIDIAN_VAULT_REPO_LOCATION=/app/vault
     volumes:
       - ${VAULT_LOCATION}:/app/vault
+
+  updater:
+    image: ${REGISTRY_LOCATION}/updater:latest
+    environment:
+      - OBSIDIAN_VAULT_REPO_LOCATION=/app/vault
+      - USERNAME=${GUSERNAME}
+      - PASSWORD=${GPASSWORD}
+      - TOKEN=${GTOKEN}
+      - OUTPUT_PATH=/app/output
+    volumes:
+      - ${VAULT_LOCATION}=/app/vault
