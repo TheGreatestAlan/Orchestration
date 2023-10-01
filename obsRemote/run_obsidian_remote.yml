@@ -27,6 +27,7 @@ services:
       - '81:81'
       - '443:443'
     volumes:
+      - ./ip_whitelist.conf:/etc/nginx/conf.d/ip_whitelist.conf:ro
       - ./npm/data:/data
       - ./npm/letsencrypt:/etc/letsencrypt
       - ./npm/log:/var/log/nginx
