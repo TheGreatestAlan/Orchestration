@@ -22,5 +22,7 @@ yarn-error.log*
 
 ip.whitelist.conf
 
+*/npm/*
+*/mysql/*
 *~
 *.BAK

@@ -10,8 +10,6 @@ PARENT_DIR="$(dirname "$DIR")"
 cd "$PARENT_DIR" || exit 1
 
 # Run docker-compose with the specified file
-docker compose -f run_obsidian_remote.yml up
+docker compose -f run_obsidian_remote.yml down
 
-# Print the working directory and the docker-compose command
-echo "Running docker-compose in $PARENT_DIR with file run_obsidian_remote.yml"
 
