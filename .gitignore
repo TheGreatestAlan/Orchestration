@@ -20,4 +20,7 @@ yarn-error.log*
 *.sln
 *.sw?
 
+ip.whitelist.conf
+
 *~
+*.BAK
