@@ -26,3 +26,5 @@ ip.whitelist.conf
 */mysql/*
 *~
 *.BAK
+
+.htpasswd

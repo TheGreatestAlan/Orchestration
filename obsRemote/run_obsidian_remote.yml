@@ -7,8 +7,6 @@ services:
     restart: unless-stopped
     networks:
       - obsidian_network
-    ports:
-      - 8080
     volumes:
       - $OBSIDIAN_VAULTS:/vaults
       - $OBSIDIAN_CONFIG:/config
@@ -33,6 +31,7 @@ services:
       - ./npm/data:/data
       - ./npm/letsencrypt:/etc/letsencrypt
       - ./npm/log:/var/log/nginx
+      - ./.htpasswd:/etc/nginx/.htpasswd 
 
 
 networks:
