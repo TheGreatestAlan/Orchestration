@@ -34,11 +34,13 @@ echo ".htpasswd created successfully."
 # Define the paths
 OBSIDIAN_VAULTS="$HOME/obsidian/vaults"
 OBSIDIAN_CONFIG="$HOME/obsidian/config"
+ORGANIZER_VAULT="$OBSIDIAN_VAULTS/SyncedVault"
 OUTPUT_PATH="$HOME/outputpath"
 
 # Write to /etc/environment
 echo "OBSIDIAN_VAULTS=$OBSIDIAN_VAULTS" | sudo tee -a /etc/environment
 echo "OBSIDIAN_CONFIG=$OBSIDIAN_CONFIG" | sudo tee -a /etc/environment
+echo "ORGANIZER_VAULT=$ORGANIZER_VAULT" | sudo tee -a /etc/environment
 echo "GUSERNAME=$GUSERNAME"  | sudo tee -a /etc/environment
 echo "GPASSWORD=$GPASSWORD"  | sudo tee -a /etc/environment
 echo "GTOKEN=$GTOKEN"  | sudo tee -a /etc/environment
