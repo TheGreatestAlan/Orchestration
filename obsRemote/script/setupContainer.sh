@@ -4,7 +4,7 @@ set -e  # Exit if any command fails
 # Check if correct number of arguments is provided
 if [ "$#" -ne 5 ]; then
     echo "Error: Missing arguments."
-    echo "Usage: $0 [username] [password] [GUSERNAME] [GPASSWORD] [GTOKEN]"
+    echo "Usage: ${BASH_SOURCE[0]} [username] [password] [GUSERNAME] [GPASSWORD] [GTOKEN]"
     exit 1
 fi
 
@@ -18,12 +18,12 @@ GTOKEN="$5"
 # Validate arguments
 if [ -z "$username" ] || [ -z "$password" ] || [ -z "$GUSERNAME" ] || [ -z "$GPASSWORD" ] || [ -z "$GTOKEN" ]; then
     echo "Error: All arguments must be non-empty."
-    echo "Usage: $0 [username] [password] [GUSERNAME] [GPASSWORD] [GTOKEN]"
+    echo "Usage: ${BASH_SOURCE[0]} [username] [password] [GUSERNAME] [GPASSWORD] [GTOKEN]"
     exit 1
 fi
 
 # Change to one directory above the script location
-cd "$(dirname "$0")/.."
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
 echo "Creating .htpasswd in $(pwd)"  # Debug: Confirm directory
 
 # Generate .htpasswd file
@@ -47,4 +47,16 @@ echo "GTOKEN=$GTOKEN"  | sudo tee -a /etc/environment
 echo "OUTPUT_PATH=$OUTPUT_PATH"  | sudo tee -a /etc/environment
 
 echo "Environment variables set successfully."
+
+# Get the directory where the script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Check if run.sh is already in crontab
+if ! crontab -l | grep -q "run.sh"; then
+    # If not, add it
+    (crontab -l 2>/dev/null; echo "@reboot ${SCRIPT_DIR}/run.sh") | crontab -
+    echo "run.sh added to crontab"
+else
+    echo "run.sh is already in crontab"
+fi
 
