@@ -16,6 +16,13 @@ services:
       - TZ=America/Denver
       - DOCKER_MODS=linuxserver/mods:universal-git
 
+  web:
+    image: happydance/organizer-web:latest
+    environment:
+      - BASE_URL=http://143.244.180.235/organizerserver/
+    networks:
+      - obsidian_network
+
   updater:
     image: updater:latest
     environment:
@@ -38,6 +45,7 @@ services:
       - '80:80'
       - '81:81'
       - '443:443'
+      - '5001:5001'
     volumes:
       - ./custom_server.conf:/etc/nginx/conf.d/custom_server.conf
       - ./npm/data:/data
