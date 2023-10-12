@@ -60,3 +60,4 @@ else
     echo "run.sh is already in crontab"
 fi
 
+bash "$(dirname "$BASH_SOURCE")/setBaseUrl.sh"
