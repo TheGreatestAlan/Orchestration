@@ -35,6 +35,16 @@ services:
       - $ORGANIZER_VAULT:/app/vault
       - $OUTPUT_PATH:/app/vault
 
+  organizerserver:
+    image: happydance/organizerserver:latest
+    environment:
+      - OBSIDIAN_VAULT_REPO_LOCATION=/app/vault
+    volumes:
+      - $ORGANIZER_VAULT/Organizer:/app/vault
+    networks:
+      - obsidian_network
+
+
   nginx_proxy_manager:
     image: 'jc21/nginx-proxy-manager:latest'
     container_name: nginx_proxy_manager
