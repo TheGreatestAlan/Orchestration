@@ -19,7 +19,8 @@ services:
   web:
     image: happydance/organizer-web:latest
     environment:
-      - BASE_URL=http://143.244.180.235/organizerserver/
+      - BASE_URL=$WEB_BASE_URL
+      - DISPLAY_PATH=/item/
     networks:
       - obsidian_network
 
@@ -55,7 +56,6 @@ services:
       - '80:80'
       - '81:81'
       - '443:443'
-      - '5001:5001'
     volumes:
       - ./custom_server.conf:/etc/nginx/conf.d/custom_server.conf
       - ./npm/data:/data
