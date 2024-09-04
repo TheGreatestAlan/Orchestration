@@ -9,18 +9,17 @@ services:
       - obsidian_network
     volumes:
       - $OBSIDIAN_VAULTS:/vaults
-      - $OBSIDIAN_CONFIG:/config
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=America/Denver
-      - DOCKER_MODS=linuxserver/mods:universal-git
 
-  web:
-    image: happydance/organizer-web:latest
+  organizerserver:
+    image: happydance/organizerserver:latest
     environment:
-      - BASE_URL=$WEB_BASE_URL
-      - DISPLAY_PATH=/item/
+      - OBSIDIAN_VAULT_REPO_LOCATION=/app/vault
+    volumes:
+      - $OBSIDIAN_VAULTS/SyncedVault/Organizer:/app/vault
     networks:
       - obsidian_network
 
@@ -33,18 +32,21 @@ services:
       - TOKEN=$GTOKEN
       - OUTPUT_PATH=/app/output
     volumes:
-      - $ORGANIZER_VAULT:/app/vault
-      - $OUTPUT_PATH:/app/vault
+      - $OBSIDIAN_VAULTS/SyncedVault:/app/vault
 
-  organizerserver:
-    image: happydance/organizerserver:latest
+  # Updated agent-server service with .env file
+  agent-server:
+    image: happydance/agent-server:latest
+    restart: unless-stopped
     environment:
-      - OBSIDIAN_VAULT_REPO_LOCATION=/app/vault
-    volumes:
-      - $ORGANIZER_VAULT/Organizer:/app/vault
+      - API_URL=https://api.openai.com/v1/chat/completions
+      - LLM_TYPE=ChatGPT
+      - ORGANIZER_SERVER_URL=http://organizerserver:8080
+      - REST_ADDRESS=$AGENT_SERVER_REST_ADDRESS
+      - REST_PORT=$AGENT_SERVER_REST_PORT
+      - API_KEY=$OPENAI_API_KEY
     networks:
       - obsidian_network
-
 
   nginx_proxy_manager:
     image: 'jc21/nginx-proxy-manager:latest'
@@ -56,12 +58,14 @@ services:
       - '80:80'
       - '81:81'
       - '443:443'
+    environment:
+      - AGENT_SERVER_PORT=$AGENT_SERVER_REST_PORT
     volumes:
       - ./custom_server.conf:/etc/nginx/conf.d/custom_server.conf
       - ./npm/data:/data
       - ./npm/letsencrypt:/etc/letsencrypt
       - ./npm/log:/var/log/nginx
-      - ./.htpasswd:/etc/nginx/.htpasswd 
+      - ./dev/.htpasswd:/etc/nginx/.htpasswd 
 
 
 networks:

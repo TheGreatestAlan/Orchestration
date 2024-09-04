@@ -23,5 +23,5 @@ for /f "usebackq delims=" %%i in ("%ENV_FILE%") do set %%i
 
 
 REM Run Docker Compose
-docker-compose -f run_obsidian.yaml exec %1 /bin/bash
+docker-compose -f run_obsidian_remote.yml exec %1 /bin/bash
 

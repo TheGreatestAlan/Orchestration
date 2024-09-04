@@ -21,10 +21,10 @@ REM Load the specified .env file and set environment variables
 for /f "usebackq delims=" %%i in ("%ENV_FILE%") do set %%i
 
 REM Stop and remove the specified service
-docker compose -f ./run_obsidian.yaml stop %1
-docker compose -f ./run_obsidian.yaml rm -f %1
+docker compose -f ./run_obsidian_remote.yml stop %1
+docker compose -f ./run_obsidian_remote.yml rm -f %1
 
 REM Bring the service back up
-docker compose -f ./run_obsidian.yaml up -d %1
+docker compose -f ./run_obsidian_remote.yml up -d %1
 
 echo The service %1 has been bounced.

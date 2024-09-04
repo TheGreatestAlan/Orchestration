@@ -21,8 +21,8 @@ REM Load the specified .env file and set environment variables
 for /f "usebackq delims=" %%i in ("%ENV_FILE%") do set %%i
 
 REM Stop and remove the specified service
-docker compose -f ./run_obsidian.yaml pull %1
+docker compose -f ./run_obsidian_remote.yml pull %1
 
-docker compose -f ./run_obsidian.yaml up -d --no-deps --build %1
+docker compose -f run_obsidian_remote.yml up -d --no-deps --build %1
 
 echo The service %1 has been updated.

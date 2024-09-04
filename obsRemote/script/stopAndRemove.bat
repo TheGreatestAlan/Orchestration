@@ -15,5 +15,5 @@ REM Load the specified .env file and set environment variables
 for /f "usebackq delims=" %%i in ("%ENV_FILE%") do set %%i
 
 REM Run Docker Compose
-docker compose -f ./run_obsidian.yaml down
+docker compose -f run_obsidian_remote.yml down
 
