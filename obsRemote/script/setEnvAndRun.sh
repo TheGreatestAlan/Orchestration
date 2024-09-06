@@ -27,5 +27,24 @@ else
   echo ".env file not found: $ENV_FILE"
 fi
 
+# Define the maximum wait time (60 seconds) and sleep interval (5 seconds)
+MAX_WAIT=60
+SLEEP_INTERVAL=5
+WAIT_TIME=0
+
+# Check if Docker Compose is available and retry if not
+while ! docker compose version >/dev/null 2>&1; do
+  echo "Docker Compose not found, waiting for it to become available..."
+  sleep $SLEEP_INTERVAL
+  WAIT_TIME=$((WAIT_TIME + SLEEP_INTERVAL))
+
+  if [ "$WAIT_TIME" -ge "$MAX_WAIT" ]; then
+    echo "Docker Compose did not become available after $MAX_WAIT seconds. Exiting..."
+    exit 1
+  fi
+done
+
 # Run Docker Compose
+echo "Docker Compose is available, starting..."
+docker compose -f run_obsidian_remote.yml pull
 docker compose -f run_obsidian_remote.yml up --build

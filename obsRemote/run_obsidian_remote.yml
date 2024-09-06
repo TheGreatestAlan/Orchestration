@@ -24,7 +24,7 @@ services:
       - obsidian_network
 
   updater:
-    image: updater:latest
+    image: happydance/updater:latest
     environment:
       - VAULT_LOCATION=/app/vault
       - USERNAME=$GUSERNAME
