@@ -28,3 +28,4 @@ ip.whitelist.conf
 *.BAK
 
 .htpasswd
+*.old
