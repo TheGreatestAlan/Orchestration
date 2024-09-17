@@ -22,7 +22,7 @@ export $(grep -v '^#' "$ENV_FILE" | xargs)
 DOCKER_COMPOSE_FILE="../run_obsidian_remote.yml"
 
 # Get a list of all images defined in the docker-compose file
-IMAGES=$(docker-compose -f "$DOCKER_COMPOSE_FILE" config --images)
+IMAGES=$(docker compose -f "$DOCKER_COMPOSE_FILE" config --images)
 
 for IMAGE_NAME in $IMAGES; do
     echo "Processing image: $IMAGE_NAME"
