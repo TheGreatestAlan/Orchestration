@@ -1,25 +1,12 @@
 version: '3'
 
 services:
-  obsidian:
-    image: 'ghcr.io/sytone/obsidian-remote:latest'
-    container_name: obsidian-remote
-    restart: unless-stopped
-    networks:
-      - obsidian_network
-    volumes:
-      - $OBSIDIAN_VAULTS:/vaults
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/Denver
-
   organizerserver:
     image: happydance/organizerserver:latest
     environment:
       - OBSIDIAN_VAULT_REPO_LOCATION=/app/vault
     volumes:
-      - $OBSIDIAN_VAULTS/SyncedVault/Organizer:/app/vault
+      - $OBSIDIAN_VAULTS/Organizer:/app/vault
     networks:
       - obsidian_network
 
@@ -32,7 +19,7 @@ services:
       - TOKEN=$GTOKEN
       - OUTPUT_PATH=/app/output
     volumes:
-      - $OBSIDIAN_VAULTS/SyncedVault:/app/vault
+      - $OBSIDIAN_VAULTS:/app/vault
 
   # Updated agent-server service with .env file
   agent-server:
