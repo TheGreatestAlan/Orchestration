@@ -21,7 +21,6 @@ services:
     volumes:
       - $OBSIDIAN_VAULTS:/app/vault
 
-  # Updated agent-server service with .env file
   agent-server:
     image: happydance/agent-server:latest
     restart: unless-stopped
@@ -34,6 +33,26 @@ services:
       - API_KEY=$OPENAI_API_KEY
     networks:
       - obsidian_network
+
+  translator:
+    image: happydance/translator:latest
+    restart: unless-stopped
+    environment:
+      - FIREWORKS_API_KEY=$FIREWORKS_API_KEY
+    networks:
+      - obsidian_network
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    restart: unless-stopped
+    environment:
+      - OLLAMA_BASE_URL=http://translator:8080
+    volumes:
+      - open-webui:/app/backend/data
+    networks:
+      - obsidian_network
+    ports:
+      - "3000:8080"
 
   nginx_proxy_manager:
     image: 'happydance/nginx:latest'
@@ -52,9 +71,7 @@ services:
       - ./npm/data:/data
       - ./npm/letsencrypt:/etc/letsencrypt
       - ./npm/log:/var/log/nginx
-      - ./dev/.htpasswd:/etc/nginx/.htpasswd 
-
+      - ./dev/.htpasswd:/etc/nginx/.htpasswd
 
 networks:
   obsidian_network:
-
