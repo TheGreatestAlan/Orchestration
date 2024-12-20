@@ -47,7 +47,6 @@ services:
     restart: unless-stopped
     environment:
       - OLLAMA_BASE_URL=http://translator:8080
-      - WEBUI_AUTH=True
 
     ports:
       - '8080:8080'
