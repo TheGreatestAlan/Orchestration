@@ -29,3 +29,5 @@ ip.whitelist.conf
 
 .htpasswd
 *.old
+*data/
+*open-webui/
