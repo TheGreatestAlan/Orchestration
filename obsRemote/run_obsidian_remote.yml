@@ -30,7 +30,7 @@ services:
       - ORGANIZER_SERVER_URL=http://organizerserver:8080
       - REST_ADDRESS=$AGENT_SERVER_REST_ADDRESS
       - REST_PORT=$AGENT_SERVER_REST_PORT
-      - API_KEY=$OPENAI_API_KEY
+      - FIREWORKS_API_KEY=$FIREWORKS_API_KEY
     networks:
       - obsidian_network
 

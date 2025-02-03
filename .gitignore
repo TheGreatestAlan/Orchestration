@@ -31,3 +31,4 @@ ip.whitelist.conf
 *.old
 *data/
 *open-webui/
+*wg0.conf
