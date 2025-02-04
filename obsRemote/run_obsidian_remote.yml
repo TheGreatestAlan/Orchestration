@@ -71,5 +71,27 @@ services:
       - ./npm/log:/var/log/nginx
       - ./dev/.htpasswd:/etc/nginx/.htpasswd
 
+  wireguard:
+    image: lscr.io/linuxserver/wireguard:latest
+    container_name: wireguard_server
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-America/Denver}
+      - SERVERURL=${SERVERURL}
+      - SERVERPORT=${SERVERPORT:-51820}
+      - PEERS=${PEERS:-1}
+      - PEERDNS=${PEERDNS:-auto}
+      - INTERNAL_SUBNET=${INTERNAL_SUBNET}
+    volumes:
+      - ./wireguard-config:/config
+      - /lib/modules:/lib/modules
+    ports:
+      - "${SERVERPORT:-51820}:${SERVERPORT:-51820}/udp"
+    restart: unless-stopped
+
 networks:
   obsidian_network:

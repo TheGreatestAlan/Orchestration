@@ -32,3 +32,15 @@ ip.whitelist.conf
 *data/
 *open-webui/
 *wg0.conf
+
+# Ignore auto-generated WireGuard configs and keys
+*/wireguard-config/peer1/
+*/wireguard-config/server/
+*/wireguard-config/*.key
+*/wireguard-config/*.private
+*/wireguard-config/*.conf
+*/wireguard-config/.donoteditthisfile
+*/wireguard-config/coredns/
+*/wireguard-config/templates/
+*/wireguard-config/tmp
+
