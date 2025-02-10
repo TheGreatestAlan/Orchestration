@@ -1,0 +1,20 @@
+[Interface]
+PrivateKey = <privatekey>
+Address = 10.13.13.1/24
+ListenPort = 51820
+
+PostUp = iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 5678 -j DNAT --to-destination 10.13.13.3:5678
+PostUp = iptables -t nat -A POSTROUTING -d 10.13.13.3 -p tcp --dport 5678 -j MASQUERADE
+# (The existing wg0 rules remain if you also want forwarding from the WG interface)
+
+PreDown = iptables -t nat -D PREROUTING -i eth0 -p tcp --dport 5678 -j DNAT --to-destination 10.13.13.3:5678
+PreDown = iptables -t nat -D POSTROUTING -d 10.13.13.3 -p tcp --dport 5678 -j MASQUERADE
+
+[Peer]
+PublicKey = <pubkey>
+AllowedIPs = 10.13.13.2/32
+
+[Peer]
+PublicKey = <pubkey>
+AllowedIPs = 10.13.13.3/32
+
