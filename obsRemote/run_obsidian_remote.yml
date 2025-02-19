@@ -4,9 +4,13 @@ services:
   organizerserver:
     image: happydance/organizerserver:latest
     environment:
-      - OBSIDIAN_VAULT_REPO_LOCATION=/app/vault
+      - BASE_GIT_REPO_LOCATION=$BASE_GIT_REPO_LOCATION_CONTAINER
+      - GIT_TOKEN=$GIT_TOKEN
+      - GIT_USER=$GIT_USER
+      - NOTE_BASE_LOCATION=$NOTE_BASE_LOCATION_CONTAINER
+      - OBSIDIAN_VAULT_REPO_LOCATION=$OBSIDIAN_VAULT_REPO_LOCATION_CONTAINER
     volumes:
-      - $OBSIDIAN_VAULTS/Organizer:/app/vault
+      - $OBSIDIAN_VAULT_LOCATION_HOST:$OBSIDIAN_VAULT_LOCATION_CONTAINER
     networks:
       - obsidian_network
 
