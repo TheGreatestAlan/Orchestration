@@ -29,8 +29,6 @@ services:
     image: happydance/agent-server:latest
     restart: unless-stopped
     environment:
-      - API_URL=https://api.openai.com/v1/chat/completions
-      - LLM_TYPE=ChatGPT
       - ORGANIZER_SERVER_URL=http://organizerserver:8080
       - REST_ADDRESS=$AGENT_SERVER_REST_ADDRESS
       - REST_PORT=$AGENT_SERVER_REST_PORT
