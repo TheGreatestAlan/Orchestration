@@ -4,21 +4,27 @@ set -euo pipefail
 # 1) Define the target directory explicitly
 TARGET_DIR="/root/Orchestration/obsRemote/npm/letsencrypt"
 
-# 2) Ensure target directories exist
+# 2) Renew all certificates
+echo "Renewing certificates with Certbot..."
+sudo certbot renew --standalone --deploy-hook "true"
+echo "Certificates renewed successfully."
+echo "-----------------------------------"
+
+# 3) Ensure target directories exist
 mkdir -p "$TARGET_DIR/live"
 mkdir -p "$TARGET_DIR/archive"
 
-# 3) Define source directories
+# 4) Define source directories
 SOURCE_DIR_LIVE="/etc/letsencrypt/live"
 SOURCE_DIR_ARCHIVE="/etc/letsencrypt/archive"
 
-# 4) Copy (sync) the contents of "live" and "archive" directories
-#    (We do NOT use --delete so nothing in the target gets removed)
+# 5) Copy (sync) the contents of "live" and "archive" directories
+#    (no --delete, so we do NOT remove anything that might already be in the target)
 echo "Copying certificate files to $TARGET_DIR ..."
 rsync -av "$SOURCE_DIR_LIVE/" "$TARGET_DIR/live/"
 rsync -av "$SOURCE_DIR_ARCHIVE/" "$TARGET_DIR/archive/"
 
-# 5) Set file permissions so only the owner can read/write
+# 6) Set permissions so only the owner can read/write
 chmod -R 600 "$TARGET_DIR"
 
 echo "All cert files copied to $TARGET_DIR."
