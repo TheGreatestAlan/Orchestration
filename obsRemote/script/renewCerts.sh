@@ -1,4 +1,6 @@
 #!/bin/bash
+#BEFORE YOU RUN THIS YOU NEED TO STOP THE DOCKER CONTAINERS
+
 set -euo pipefail
 
 # 1) Define the target directory explicitly
