@@ -33,6 +33,17 @@ services:
       - REST_ADDRESS=$AGENT_SERVER_REST_ADDRESS
       - REST_PORT=$AGENT_SERVER_REST_PORT
       - FIREWORKS_API_KEY=$FIREWORKS_API_KEY
+      - SCHEDULER_URL=http://scheduler:8080
+      - LLM_LOG_FILE=/app/logs/llm.log
+      - GENERAL_LOG_FILE=/app/logs/general.log
+      - LOG_LEVEL=DEBUG
+      - USER_ENCRYPTION_KEY=$USER_ENCRYPTION_KEY
+      - USER_DATA_PATH=/app/user
+      - FIREBASE_SERVICE_ACCOUNT_KEY_LOCATION=/app/firebase/FirebaseServiceAccountKey.json
+    volumes:
+      - ./agent-server/logs:/app/logs
+      - ./agent-server/user:/app/user
+      - ./agent-server/firebase:/app/firebase
     networks:
       - obsidian_network
 
