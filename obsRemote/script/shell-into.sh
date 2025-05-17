@@ -40,7 +40,7 @@ SHELL_CMD="${2:-bash}"  # default to bash, or sh if you prefer
 # --- ensure it’s running, then shell in ----------------------------
 
 # bring up just that service if needed
-docker compose -f "$COMPOSE_FILE" up "$SERVICE"
+docker compose -f "$COMPOSE_FILE" up -d "$SERVICE"
 
 # now exec into it
 echo "🛠  Attaching to '$SERVICE' (running '$SHELL_CMD')"
