@@ -30,3 +30,7 @@ tmp/
 
 # Keep environment template but exclude potential secrets
 # dev/docker-compose.env should be tracked as template
+
+# Docker registry data
+registry/data/
+registry/auth/htpasswd

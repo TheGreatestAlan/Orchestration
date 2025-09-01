@@ -85,6 +85,23 @@ services:
     depends_on:
       - certbot
 
+  docker-registry:
+    image: registry:2
+    container_name: docker_registry
+    restart: unless-stopped
+    environment:
+      - REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY=/var/lib/registry
+      - REGISTRY_AUTH=htpasswd
+      - REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm
+      - REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd
+      - REGISTRY_HTTP_ADDR=0.0.0.0:5000
+      - REGISTRY_STORAGE_DELETE_ENABLED=true
+    volumes:
+      - ./registry/data:/var/lib/registry
+      - ./registry/auth:/auth
+    networks:
+      - obsidian_network
+
   certbot:
     image: certbot/certbot:latest
     container_name: certbot
@@ -93,8 +110,8 @@ services:
       - ./webroot:/var/www/certbot
       - ./certbot-scripts:/scripts
     environment:
-      - CERTBOT_EMAIL=${CERTBOT_EMAIL:-admin@alanhoangnguyen.com}
-      - DOMAINS=${CERTBOT_DOMAINS:-alanhoangnguyen.com,www.alanhoangnguyen.com,openwebui.alanhoangnguyen.com,helper.alanhoangnguyen.com,n8n.alanhoangnguyen.com}
+      - CERTBOT_EMAIL=$CERTBOT_EMAIL
+      - DOMAINS=$CERTBOT_DOMAINS
     entrypoint: /bin/sh
     command: >
       -c "

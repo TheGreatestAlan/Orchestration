@@ -44,3 +44,11 @@ ip.whitelist.conf
 */wireguard-config/templates/
 */wireguard-config/tmp
 
+# Docker registry data
+registry/
+
+# Backup files
+*.backup-before-*
+
+# Temporary files
+tmp
