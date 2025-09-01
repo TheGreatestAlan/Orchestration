@@ -1,0 +1,32 @@
+# SSL Certificate data - regenerated automatically
+npm/letsencrypt/
+webroot/
+
+# Backup files
+*.backup
+*.BAK
+*.bak
+*.tmp
+*~
+
+# Timestamped backups
+*.yml.*[0-9]*
+*.conf.*[0-9]*
+
+# Runtime data directories
+agent-server/logs/
+agent-server/user/
+agent-server/firebase/
+scheduler_data/
+n8n_data/
+npm/data/
+npm/log/
+wireguard-config/
+
+# Temporary files
+script/tmp
+tmp/
+../tmp
+
+# Keep environment template but exclude potential secrets
+# dev/docker-compose.env should be tracked as template

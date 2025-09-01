@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   organizerserver:
     image: happydance/organizerserver:latest
@@ -66,15 +64,15 @@ services:
       - obsidian_network
 
   nginx_proxy_manager:
-    image: 'happydance/nginx:latest'
+    image: "happydance/nginx:latest"
     container_name: nginx_proxy_manager
     restart: unless-stopped
     networks:
       - obsidian_network
     ports:
-      - '80:80'
-      - '81:81'
-      - '443:443'
+      - "80:80"
+      - "81:81"
+      - "443:443"
     environment:
       - AGENT_SERVER_PORT=$AGENT_SERVER_REST_PORT
     volumes:
@@ -83,6 +81,31 @@ services:
       - ./npm/letsencrypt:/etc/letsencrypt
       - ./npm/log:/var/log/nginx
       - ./dev/.htpasswd:/etc/nginx/.htpasswd
+      - ./webroot:/var/www/certbot
+    depends_on:
+      - certbot
+
+  certbot:
+    image: certbot/certbot:latest
+    container_name: certbot
+    volumes:
+      - ./npm/letsencrypt:/etc/letsencrypt
+      - ./webroot:/var/www/certbot
+      - ./certbot-scripts:/scripts
+    environment:
+      - CERTBOT_EMAIL=${CERTBOT_EMAIL:-admin@alanhoangnguyen.com}
+      - DOMAINS=${CERTBOT_DOMAINS:-alanhoangnguyen.com,www.alanhoangnguyen.com,openwebui.alanhoangnguyen.com,helper.alanhoangnguyen.com,n8n.alanhoangnguyen.com}
+    entrypoint: /bin/sh
+    command: >
+      -c "
+      trap exit TERM;
+      while :; do
+        sleep 12h & wait;
+        /scripts/renew-certs.sh;
+      done"
+    restart: unless-stopped
+    networks:
+      - obsidian_network
 
   wireguard:
     image: lscr.io/linuxserver/wireguard:latest
@@ -110,6 +133,20 @@ services:
       - "${SERVERPORT:-51820}:${SERVERPORT:-51820}/udp"
     restart: unless-stopped
 
+  scheduler:
+    image: happydance/scheduler:latest
+    container_name: scheduler
+    environment:
+      - REST_ADDRESS=${SCHEDULER_REST_ADDRESS:-0.0.0.0}
+      - REST_PORT=${SCHEDULER_PORT:-8080}
+      - HELPER_URL=http://helper:8080
+      - SCHEDULER_STORAGE_PATH=/app/data/scheduler_tasks.json
+    volumes:
+      - ./scheduler_data:/app/data
+    networks:
+      - obsidian_network
+    restart: unless-stopped
+
   n8n:
     image: n8nio/n8n
     container_name: n8n
@@ -122,9 +159,7 @@ services:
       - WEBHOOK_URL=${WEBHOOK_URL}
     networks:
       - obsidian_network
-
     restart: unless-stopped
-
 
 networks:
   obsidian_network:
