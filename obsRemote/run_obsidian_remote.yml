@@ -24,7 +24,7 @@ services:
       - $OBSIDIAN_VAULTS:/app/vault
 
   agent-server:
-    image: happydance/agent-server:latest
+    image: registry.alanhoangnguyen.com/admin/agent-server:latest
     restart: unless-stopped
     environment:
       - ORGANIZER_SERVER_URL=http://organizerserver:8080
@@ -38,10 +38,30 @@ services:
       - USER_ENCRYPTION_KEY=$USER_ENCRYPTION_KEY
       - USER_DATA_PATH=/app/user
       - FIREBASE_SERVICE_ACCOUNT_KEY_LOCATION=/app/firebase/FirebaseServiceAccountKey.json
+      - WS_HOST=$WS_HOST
+      - WS_PORT=$WS_PORT
+      - SPEECH_PAUSE_TIMEOUT_SEC=$SPEECH_PAUSE_TIMEOUT_SEC
+      - UNIFIED_STARTUP=$UNIFIED_STARTUP
+      - USE_MOCK_AGENT=$USE_MOCK_AGENT
+      - MODEL_COMMAND_PARSER=$MODEL_COMMAND_PARSER
+      - MODEL_CONFIRMATION_INTERPRETER=$MODEL_CONFIRMATION_INTERPRETER
+      - MODEL_CORRECTION_PROCESSOR=$MODEL_CORRECTION_PROCESSOR
+      - MODEL_CONTEXTUAL_CORRECTION_PROCESSOR=$MODEL_CONTEXTUAL_CORRECTION_PROCESSOR
+      - MODEL_FUNCTION_CREATOR=$MODEL_FUNCTION_CREATOR
+      - MODEL_JSON_FORMATTER=$MODEL_JSON_FORMATTER
+      - MODEL_REACT_PLAN=$MODEL_REACT_PLAN
+      - MODEL_REACT_EXIT_STRATEGY=$MODEL_REACT_EXIT_STRATEGY
+      - MODEL_REACT_OBSERVE=$MODEL_REACT_OBSERVE
+      - CONFIRM_TIMEOUT_SEC=$CONFIRM_TIMEOUT_SEC
+      - INVENTORY_API_BASE_URL=$INVENTORY_API_BASE_URL
+      - ENCRYPTION_PASSWORD=$ENCRYPTION_PASSWORD
+      - EXIT_ON_MODEL_VALIDATION_FAILURE=$EXIT_ON_MODEL_VALIDATION_FAILURE
     volumes:
       - ./agent-server/logs:/app/logs
       - ./agent-server/user:/app/user
       - ./agent-server/firebase:/app/firebase
+    ports:
+      - "127.0.0.1:${WS_PORT:-12346}:${WS_PORT:-12346}"
     networks:
       - obsidian_network
 

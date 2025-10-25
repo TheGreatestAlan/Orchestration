@@ -1,4 +1,21 @@
 # HTTP server for ACME challenges and redirects
+# Dedicated HTTP server for flofluent.com
+server {
+    listen 80;
+    server_name flofluent.com www.flofluent.com;
+    
+    # ACME challenge location
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+        allow all;
+    }
+    
+    # Redirect all other HTTP traffic to HTTPS
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
 server {
     listen 80;
     server_name alanhoangnguyen.com www.alanhoangnguyen.com openwebui.alanhoangnguyen.com helper.alanhoangnguyen.com n8n.alanhoangnguyen.com registry.alanhoangnguyen.com;
@@ -12,6 +29,23 @@ server {
     # Redirect all other HTTP traffic to HTTPS
     location / {
         return 301 https://$server_name$request_uri;
+    }
+}
+
+# Dedicated HTTP server for flofluent.com
+server {
+    listen 80;
+    server_name flofluent.com www.flofluent.com;
+    
+    # ACME challenge location
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+        allow all;
+    }
+    
+    # Redirect all other HTTP traffic to HTTPS
+    location / {
+        return 301 https://$host$request_uri;
     }
 }
 
@@ -51,6 +85,23 @@ server {
     }
 }
 
+# Dedicated HTTP server for flofluent.com
+server {
+    listen 80;
+    server_name flofluent.com www.flofluent.com;
+    
+    # ACME challenge location
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+        allow all;
+    }
+    
+    # Redirect all other HTTP traffic to HTTPS
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
 server {
     listen 443 ssl http2;
     server_name openwebui.alanhoangnguyen.com;
@@ -70,6 +121,23 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# Dedicated HTTP server for flofluent.com
+server {
+    listen 80;
+    server_name flofluent.com www.flofluent.com;
+    
+    # ACME challenge location
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+        allow all;
+    }
+    
+    # Redirect all other HTTP traffic to HTTPS
+    location / {
+        return 301 https://$host$request_uri;
     }
 }
 
@@ -104,6 +172,23 @@ server {
     access_log /var/log/nginx/subdomain_access.log;
 }
 
+# Dedicated HTTP server for flofluent.com
+server {
+    listen 80;
+    server_name flofluent.com www.flofluent.com;
+    
+    # ACME challenge location
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+        allow all;
+    }
+    
+    # Redirect all other HTTP traffic to HTTPS
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
 server {
     listen 443 ssl http2;
     server_name n8n.alanhoangnguyen.com;
@@ -132,6 +217,23 @@ server {
     # Logging
     error_log  /var/log/nginx/n8n_error.log;
     access_log /var/log/nginx/n8n_access.log;
+}
+
+# Dedicated HTTP server for flofluent.com
+server {
+    listen 80;
+    server_name flofluent.com www.flofluent.com;
+    
+    # ACME challenge location
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+        allow all;
+    }
+    
+    # Redirect all other HTTP traffic to HTTPS
+    location / {
+        return 301 https://$host$request_uri;
+    }
 }
 
 server {
@@ -168,7 +270,7 @@ server {
     access_log /var/log/nginx/registry_access.log;
 }
 
-# Dedicated HTTP server for flofluent.com  
+# Dedicated HTTP server for flofluent.com
 server {
     listen 80;
     server_name flofluent.com www.flofluent.com;
@@ -185,13 +287,12 @@ server {
     }
 }
 
-# HTTPS server for flofluent.com
 server {
     listen 443 ssl http2;
     server_name flofluent.com www.flofluent.com;
 
-    ssl_certificate /etc/letsencrypt/live/flofluent.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/flofluent.com/privkey.pem;
+    ssl_certificate /etc/nginx/ssl/flofluent.crt;
+    ssl_certificate_key /etc/nginx/ssl/flofluent.key;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers on;
 
@@ -207,7 +308,7 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # Optional: Additional settings for security and performance  
+    # Optional: Additional settings for security and performance
     client_max_body_size 50M;
     error_log /var/log/nginx/flofluent_error.log;
     access_log /var/log/nginx/flofluent_access.log;
