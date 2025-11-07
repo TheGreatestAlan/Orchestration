@@ -47,6 +47,9 @@ ip.whitelist.conf
 # Docker registry data
 registry/
 
+# PyPI server data
+*/pypi-server/
+
 # Backup files
 *.backup-before-*
 
