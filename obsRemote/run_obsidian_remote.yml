@@ -9,6 +9,7 @@ services:
       - OBSIDIAN_VAULT_REPO_LOCATION=$OBSIDIAN_VAULT_REPO_LOCATION_CONTAINER
     volumes:
       - $OBSIDIAN_VAULT_LOCATION_HOST:$OBSIDIAN_VAULT_LOCATION_CONTAINER
+      - ~/.ssh:/root/.ssh:ro
     networks:
       - obsidian_network
 
@@ -119,6 +120,17 @@ services:
     volumes:
       - ./registry/data:/var/lib/registry
       - ./registry/auth:/auth
+    networks:
+      - obsidian_network
+
+  pypi-server:
+    image: pypiserver/pypiserver:latest
+    container_name: pypi-server
+    restart: unless-stopped
+    volumes:
+      - ./pypi-server/packages:/data/packages
+      - ./pypi-server/auth:/data/auth
+    command: run -p 8080 -a update -P /data/auth/.htpasswd /data/packages
     networks:
       - obsidian_network
 
