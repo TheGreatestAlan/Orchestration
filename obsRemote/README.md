@@ -254,6 +254,35 @@ Agent server logs are available at:
 
 Nginx logs: `npm/log/`
 
+### Automated Cleanup
+
+The system automatically cleans up unused Docker resources to prevent disk space issues:
+
+**Automated cleanup (via cron):**
+- Runs weekly on Sunday at 2 AM
+- Removes dangling/untagged images
+- Removes unused images older than 7 days
+- Runs Docker registry garbage collection
+- Logs to `/var/log/docker-cleanup.log`
+
+**Manual cleanup:**
+```bash
+cd obsRemote
+./script/cleanup-docker.sh
+```
+
+**View cleanup logs:**
+```bash
+tail -f /var/log/docker-cleanup.log
+```
+
+**Change cleanup schedule:**
+```bash
+crontab -e
+# Default: 0 2 * * 0 (weekly)
+# Daily:   0 2 * * * (every day at 2 AM)
+```
+
 ## Security Notes
 
 - Registry and PyPI require HTTP basic authentication

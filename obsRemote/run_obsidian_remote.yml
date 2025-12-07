@@ -25,7 +25,7 @@ services:
       - $OBSIDIAN_VAULTS:/app/vault
 
   agent-server:
-    image: registry.alanhoangnguyen.com/admin/agent-server:latest
+    image: registry.alanhoangnguyen.com/admin/agent-server:${AGENT_VERSION:-latest}
     restart: unless-stopped
     environment:
       - ORGANIZER_SERVER_URL=http://organizerserver:8080
@@ -66,8 +66,8 @@ services:
     networks:
       - obsidian_network
 
-  translator:
-    image: happydance/translator:latest
+  conversationalist:
+    image: registry.alanhoangnguyen.com/admin/conversationalist:${CONVERSATIONALIST_VERSION:-latest}
     restart: unless-stopped
     environment:
       - FIREWORKS_API_KEY=$FIREWORKS_API_KEY
@@ -75,10 +75,11 @@ services:
       - obsidian_network
 
   open-webui:
-    image: ghcr.io/open-webui/open-webui:main
+    image: registry.alanhoangnguyen.com/admin/openwebui-monolithic:${OPENWEBUI_VERSION:-latest}
     restart: unless-stopped
     environment:
-      - OLLAMA_BASE_URL=http://translator:8080
+      - OLLAMA_BASE_URL=http://conversationalist:8080
+      - PUBLIC_CONVERSATIONALIST_BASE_URL=http://conversationalist:8080
     volumes:
       - ./dev/open-webui:/app/backend/data
     networks:
