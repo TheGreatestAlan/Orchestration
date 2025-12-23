@@ -37,7 +37,7 @@ Orchestration/
 
 ### Primary System: obsRemote
 
-The main production system is in the `obsRemote/` directory. It manages 11 containerized services with SSL, VPN, private registries, and AI agents.
+The main production system is in the `obsRemote/` directory. It manages 12 containerized services with SSL, VPN, private registries, and AI agents.
 
 **Always work from the obsRemote directory:**
 ```bash
@@ -106,7 +106,7 @@ Current git status shows:
 
 ## Production Services Overview
 
-The `obsRemote/` system runs 11 containerized services:
+The `obsRemote/` system runs 12 containerized services:
 
 ### Core Services
 - **agent-server** - Multi-model LLM support (Fireworks, OpenAI), REST + WebSocket
@@ -126,12 +126,16 @@ The `obsRemote/` system runs 11 containerized services:
 - **docker-registry** - Private Docker image registry at registry.alanhoangnguyen.com
 - **pypi-server** - Private Python package repository at helper.alanhoangnguyen.com/pypi/
 
+### Security Services
+- **vaultwarden** - Self-hosted password manager at vault.alanhoangnguyen.com (Bitwarden-compatible)
+
 ### Domains Served
 - alanhoangnguyen.com
 - openwebui.alanhoangnguyen.com
 - helper.alanhoangnguyen.com
 - n8n.alanhoangnguyen.com
 - registry.alanhoangnguyen.com
+- vault.alanhoangnguyen.com
 - flofluent.com
 
 ## Task Documentation Standards

@@ -2,7 +2,7 @@
 
 ## System Overview
 
-This is a **production Docker Compose orchestration** managing 11 containerized services. It's described as "small and scrappy" but serves multiple production domains with SSL, VPN, private registries, and AI agents.
+This is a **production Docker Compose orchestration** managing 12 containerized services. It's described as "small and scrappy" but serves multiple production domains with SSL, VPN, private registries, and AI agents.
 
 ## Critical Working Rules
 
@@ -163,6 +163,36 @@ service-a → http://service-b:port (direct via service name)
 - Webhook URL configured
 - restart: unless-stopped
 
+#### 13. vaultwarden (vaultwarden/server:latest)
+- Self-hosted password manager at vault.alanhoangnguyen.com
+- Bitwarden-compatible API (works with all Bitwarden clients)
+- Port 80 internally (exposed, not published)
+- Data: `vaultwarden/vw-data/` → `/data`
+- Environment:
+  - `DOMAIN=${VAULTWARDEN_DOMAIN}` - Must start with https://
+  - `ADMIN_TOKEN=${VAULTWARDEN_ADMIN_TOKEN}` - Admin panel access
+  - `SIGNUPS_ALLOWED=false` - Public signups disabled for security
+  - `INVITATIONS_ALLOWED=true` - Admin can invite users
+  - `WEB_VAULT_ENABLED=true` - Web interface enabled
+- Features:
+  - End-to-end encrypted vault (master password never sent to server)
+  - WebSocket support for push notifications (/notifications/hub)
+  - Admin panel at `/admin` (requires ADMIN_TOKEN)
+  - Health check endpoint: `/alive`
+  - SQLite database (db.sqlite3)
+- Backups:
+  - Automated daily backups at 2:00 AM
+  - Script: `vaultwarden/backup-vaultwarden.sh`
+  - Location: `/var/backups/vaultwarden/`
+  - Retention: 30 days
+  - Restore guide: `vaultwarden/RESTORE.md`
+- Security:
+  - Runs as UID 1000:1000
+  - No external port exposure (proxied via nginx)
+  - Client uploads limited to 50M
+  - HSTS and security headers enforced by nginx
+- restart: unless-stopped
+
 ## Common Operations
 
 ### Checking Service Status
@@ -312,6 +342,7 @@ server {
 - docker-registry:5000
 - scheduler:8080
 - helper:8080 (referenced by scheduler)
+- vaultwarden:80
 
 ### DNS/Domain Routing
 
@@ -322,6 +353,7 @@ Nginx handles routing by server_name:
 - helper.alanhoangnguyen.com (PyPI)
 - n8n.alanhoangnguyen.com
 - registry.alanhoangnguyen.com (Docker registry)
+- vault.alanhoangnguyen.com (Vaultwarden password manager)
 - flofluent.com
 - www.flofluent.com
 
@@ -344,6 +376,8 @@ All require valid DNS A records pointing to the server IP.
 - All HTTP redirects to HTTPS - good!
 - Registry requires auth - good!
 - PyPI requires auth - good!
+- Vaultwarden admin panel requires token - good!
+- Vaultwarden public signups disabled - good!
 
 ### Volume Permissions
 
@@ -351,9 +385,10 @@ Check ownership on mounted volumes:
 ```bash
 ls -la obsRemote/agent-server/logs/
 ls -la obsRemote/registry/data/
+ls -la obsRemote/vaultwarden/vw-data/  # Should be 1000:1000
 ```
 
-Most services run as root or specific UIDs (PUID/PGID for wireguard).
+Most services run as root or specific UIDs (PUID/PGID for wireguard, UID 1000 for vaultwarden).
 
 ## SSL/TLS Management
 
@@ -458,6 +493,7 @@ docker compose -f run_obsidian_remote.yml exec nginx_proxy_manager ls -la /etc/l
 - `n8n_data/` - Workflows
 - `scheduler_data/` - Scheduled tasks
 - `wireguard-config/` - VPN configs
+- `vaultwarden/vw-data/` - Password vault database (CRITICAL - has automated daily backups)
 
 **Can regenerate:**
 - `agent-server/logs/` - Logs
@@ -479,11 +515,21 @@ tar -czf obsRemote-backup-$(date +%Y%m%d).tar.gz \
   obsRemote/n8n_data/ \
   obsRemote/scheduler_data/ \
   obsRemote/wireguard-config/ \
+  obsRemote/vaultwarden/vw-data/ \
   obsRemote/custom_server.conf \
   obsRemote/run_obsidian_remote.yml
 
 # Exclude large package repos if needed
 ```
+
+**Vaultwarden Automated Backups:**
+- Script: `vaultwarden/backup-vaultwarden.sh`
+- Schedule: Daily at 2:00 AM (via cron)
+- Location: `/var/backups/vaultwarden/`
+- Format: `vaultwarden_backup_YYYYMMDD_HHMMSS.tar.gz`
+- Retention: 30 days (automatic cleanup)
+- Logs: `/var/log/vaultwarden-backup.log`
+- Restore: See `vaultwarden/RESTORE.md`
 
 ## Troubleshooting Guide
 
