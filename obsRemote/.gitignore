@@ -22,6 +22,7 @@ n8n_data/
 npm/data/
 npm/log/
 wireguard-config/
+vaultwarden/vw-data/
 
 # Temporary files
 script/tmp

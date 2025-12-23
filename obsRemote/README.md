@@ -4,7 +4,7 @@ A small, scrappy Docker Compose-based production system hosting multiple microse
 
 ## Architecture Overview
 
-This system runs 11 containerized services orchestrated via Docker Compose:
+This system runs 12 containerized services orchestrated via Docker Compose:
 
 ### Core AI Services
 - **organizerserver** - Manages git repositories and Obsidian vault operations
@@ -33,6 +33,14 @@ This system runs 11 containerized services orchestrated via Docker Compose:
   - Basic auth protected
 - **pypi-server** - Private Python package repository
   - Available at helper.alanhoangnguyen.com/pypi/
+
+### Security Services
+- **vaultwarden** - Self-hosted password manager (Bitwarden-compatible)
+  - Available at vault.alanhoangnguyen.com
+  - End-to-end encrypted password vault
+  - Supports browser extensions, mobile apps, and desktop clients
+  - Admin panel protected with secure token
+  - Automated daily backups with 30-day retention
 
 ## Directory Structure
 
@@ -69,6 +77,10 @@ obsRemote/
 ├── scheduler_data/            # Scheduler task persistence
 ├── n8n_data/                  # n8n workflow data
 ├── wireguard-config/          # WireGuard VPN configs
+├── vaultwarden/               # Vaultwarden password manager data
+│   ├── vw-data/               # Encrypted vault database
+│   ├── backup-vaultwarden.sh  # Automated backup script
+│   └── RESTORE.md             # Restore procedures
 └── webroot/                   # Certbot webroot for challenges
 ```
 
@@ -180,6 +192,7 @@ All services are proxied through nginx on standard ports:
 - helper.alanhoangnguyen.com - PyPI server
 - n8n.alanhoangnguyen.com - n8n workflow automation
 - registry.alanhoangnguyen.com - Docker registry
+- vault.alanhoangnguyen.com - Vaultwarden password manager
 - flofluent.com
 - www.flofluent.com
 
@@ -235,6 +248,7 @@ Key data is persisted via Docker volumes:
 - n8n: `n8n_data/`
 - Scheduler: `scheduler_data/`
 - WireGuard: `wireguard-config/`
+- Vaultwarden: `vaultwarden/vw-data/` (automated daily backups to `/var/backups/vaultwarden/`)
 
 ## Maintenance
 
@@ -243,6 +257,12 @@ Key data is persisted via Docker volumes:
 The system creates automatic backups with timestamps:
 - `run_obsidian_remote.yml.*` - Docker Compose backups
 - `custom_server.conf.*` - Nginx config backups
+- Vaultwarden vault data - Automated daily backups at 2:00 AM
+  - Location: `/var/backups/vaultwarden/`
+  - Retention: 30 days
+  - Manual backup: `./vaultwarden/backup-vaultwarden.sh`
+  - Restore guide: `./vaultwarden/RESTORE.md`
+  - Logs: `/var/log/vaultwarden-backup.log`
 
 Check the `.gitignore` to see what's excluded from version control.
 
