@@ -51,7 +51,8 @@ registry/
 */pypi-server/
 
 # Backup files
-*.backup-before-*
+*.backup*
+*.bak
 
 # Temporary files
 tmp

@@ -1,0 +1,14 @@
+# Vaultwarden Automated Tasks
+# Add these to your crontab with: crontab -e
+
+# Backup daily at 2 AM
+0 2 * * * cd /home/alan/workspace/vaultWarden && ./backup.sh >> ./logs/backup.log 2>&1
+
+# Monitor every 5 minutes
+*/5 * * * * cd /home/alan/workspace/vaultWarden && ./monitor.sh >> ./logs/monitor.log 2>&1
+
+# Update Vaultwarden weekly (Sundays at 3 AM)
+# 0 3 * * 0 cd /home/alan/workspace/vaultWarden && docker compose pull && docker compose up -d >> ./logs/update.log 2>&1
+
+# Clean up old logs monthly
+0 4 1 * * find /home/alan/workspace/vaultWarden/logs -name "*.log" -mtime +30 -delete
