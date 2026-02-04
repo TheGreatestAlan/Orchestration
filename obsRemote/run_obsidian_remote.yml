@@ -1,17 +1,36 @@
 services:
   organizerserver:
-    image: happydance/organizerserver:latest
+    image: registry.alanhoangnguyen.com/admin/organizerserver:${ORGANIZER_VERSION:-latest}
+    restart: unless-stopped
     environment:
       - BASE_GIT_REPO_LOCATION=$BASE_GIT_REPO_LOCATION_CONTAINER
       - GIT_TOKEN=$GIT_TOKEN
       - GIT_USER=$GIT_USER
+      - GIT_SYNC_ENABLED=$GIT_SYNC_ENABLED
       - NOTE_BASE_LOCATION=$NOTE_BASE_LOCATION_CONTAINER
       - OBSIDIAN_VAULT_REPO_LOCATION=$OBSIDIAN_VAULT_REPO_LOCATION_CONTAINER
+      - MCP_TRANSPORT=streamable-http
+      - MCP_PORT=3000
+      - MCP_API_KEY=$MCP_API_KEY
+      - MCP_DNS_REBINDING_PROTECTION=$MCP_DNS_REBINDING_PROTECTION
+      - MCP_ALLOWED_HOSTS=$MCP_ALLOWED_HOSTS
+      - MCP_ALLOWED_ORIGINS=$MCP_ALLOWED_ORIGINS
+      - MCP_OAUTH_ENABLED=$MCP_OAUTH_ENABLED
+      - MCP_OAUTH_ISSUER=$MCP_OAUTH_ISSUER
+      - MCP_OAUTH_AUDIENCE=$MCP_OAUTH_AUDIENCE
+      - MCP_OAUTH_SCOPES=$MCP_OAUTH_SCOPES
+      - INVENTORY_API_BASE_URL=http://localhost:8080
     volumes:
       - $OBSIDIAN_VAULT_LOCATION_HOST:$OBSIDIAN_VAULT_LOCATION_CONTAINER
       - ~/.ssh:/root/.ssh:ro
     networks:
       - obsidian_network
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   updater:
     image: happydance/updater:latest
@@ -81,6 +100,8 @@ services:
       - OLLAMA_BASE_URL=http://conversationalist:8080
       - CONVERSATIONALIST_BASE_URL=http://conversationalist:8080
       - PUBLIC_CONVERSATIONALIST_BASE_URL=http://conversationalist:8080
+      - API_KEY_ENCRYPTION_KEY=${API_KEY_ENCRYPTION_KEY}
+      - GOOGLE_TRANSLATE_API_KEY=${GOOGLE_TRANSLATE_API_KEY}
     volumes:
       - ./dev/open-webui:/app/backend/data
     networks:
@@ -119,9 +140,13 @@ services:
       - REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd
       - REGISTRY_HTTP_ADDR=0.0.0.0:5000
       - REGISTRY_STORAGE_DELETE_ENABLED=true
+      - REGISTRY_LOG_LEVEL=info
+      - REGISTRY_HTTP_DEBUG_ADDR=0.0.0.0:5001
+      - REGISTRY_HTTP_HTTP2_DISABLED=true
     volumes:
       - ./registry/data:/var/lib/registry
       - ./registry/auth:/auth
+      - ./registry/config.yml:/etc/docker/registry/config.yml:ro
     networks:
       - obsidian_network
 
@@ -234,6 +259,109 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  keycloak-db:
+    image: postgres:16-alpine
+    container_name: keycloak_db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=keycloak
+      - POSTGRES_USER=keycloak
+      - POSTGRES_PASSWORD=${KEYCLOAK_DB_PASSWORD}
+    volumes:
+      - ./keycloak/db-data:/var/lib/postgresql/data
+    networks:
+      - obsidian_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: keycloak
+    restart: unless-stopped
+    command:
+      - start
+      - --db=postgres
+      - --features=token-exchange,admin-fine-grained-authz
+    environment:
+      - KC_HOSTNAME=auth.alanhoangnguyen.com
+      - KC_HTTP_ENABLED=true
+      - KC_HOSTNAME_STRICT=false
+      - KC_PROXY_HEADERS=xforwarded
+      - KC_DB=postgres
+      - KC_DB_URL_HOST=keycloak-db
+      - KC_DB_URL_PORT=5432
+      - KC_DB_URL_DATABASE=keycloak
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_PASSWORD=${KEYCLOAK_DB_PASSWORD}
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+      - KC_HEALTH_ENABLED=true
+      - KC_METRICS_ENABLED=true
+    volumes:
+      - ./keycloak/data:/opt/keycloak/data
+    networks:
+      - obsidian_network
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080 && echo 'OK' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  jwt-validator:
+    image: registry.alanhoangnguyen.com/admin/jwt-validator:${JWT_VALIDATOR_VERSION:-latest}
+    container_name: jwt_validator
+    restart: unless-stopped
+    environment:
+      - PORT=${JWT_VALIDATOR_PORT}
+      - KEYCLOAK_ISSUER=https://auth.alanhoangnguyen.com/realms/mcp
+      - KEYCLOAK_JWKS_URI=https://auth.alanhoangnguyen.com/realms/mcp/protocol/openid-connect/certs
+      - MCP_API_KEY=${MCP_API_KEY}
+      - MCP_BACKEND_URL=http://organizerserver:3000
+      - MCP_BACKEND_OBSIDIAN_URL=http://mcp-obsidian:3000
+      - EXPECTED_AUDIENCE=https://alanhoangnguyen.com/mcp
+      - REQUIRED_SCOPES=email,profile
+      - JWKS_CACHE_TTL=${JWKS_CACHE_TTL_SECONDS}
+      - LOG_LEVEL=${JWT_VALIDATION_LOG_LEVEL}
+    networks:
+      - obsidian_network
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:${JWT_VALIDATOR_PORT}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  mcp-obsidian:
+    image: registry.alanhoangnguyen.com/admin/mcp-obsidian:${MCP_OBSIDIAN_VERSION:-latest}
+    container_name: mcp-obsidian
+    restart: unless-stopped
+    command: ["node", "src/index.js", "/obsidian"]
+    environment:
+      - PORT=3000
+      - ALLOWED_ORIGINS=*
+      - MCP_API_KEY=${MCP_API_KEY}
+    volumes:
+      - ${OBSIDIAN_VAULT_LOCATION_HOST}:${OBSIDIAN_VAULT_LOCATION_CONTAINER}
+    networks:
+      - obsidian_network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
 
 networks:
   obsidian_network:

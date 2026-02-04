@@ -20,15 +20,16 @@ import (
 
 // Configuration from environment variables
 type Config struct {
-	Port              string
-	KeycloakIssuer    string
-	KeycloakJWKSURI   string
-	MCPAPIKey         string
-	MCPBackendURL     string
-	ExpectedAudience  string
-	RequiredScopes    []string
-	JWKSCacheTTL      time.Duration
-	LogLevel          string
+	Port                   string
+	KeycloakIssuer         string
+	KeycloakJWKSURI        string
+	MCPAPIKey              string
+	MCPBackendURL          string
+	MCPBackendObsidianURL  string
+	ExpectedAudience       string
+	RequiredScopes         []string
+	JWKSCacheTTL           time.Duration
+	LogLevel               string
 }
 
 // JWKS structures
@@ -70,15 +71,16 @@ func loadConfig() Config {
 	}
 
 	return Config{
-		Port:             port,
-		KeycloakIssuer:   getEnv("KEYCLOAK_ISSUER", "https://alanhoangnguyen.com/oauth/realms/mcp"),
-		KeycloakJWKSURI:  getEnv("KEYCLOAK_JWKS_URI", "https://alanhoangnguyen.com/oauth/realms/mcp/protocol/openid-connect/certs"),
-		MCPAPIKey:        os.Getenv("MCP_API_KEY"),
-		MCPBackendURL:    getEnv("MCP_BACKEND_URL", "http://organizerserver:3000"),
-		ExpectedAudience: getEnv("EXPECTED_AUDIENCE", "https://alanhoangnguyen.com/mcp"),
-		RequiredScopes:   scopes,
-		JWKSCacheTTL:     jwksCacheTTL,
-		LogLevel:         getEnv("LOG_LEVEL", "INFO"),
+		Port:                   port,
+		KeycloakIssuer:         getEnv("KEYCLOAK_ISSUER", "https://alanhoangnguyen.com/oauth/realms/mcp"),
+		KeycloakJWKSURI:        getEnv("KEYCLOAK_JWKS_URI", "https://alanhoangnguyen.com/oauth/realms/mcp/protocol/openid-connect/certs"),
+		MCPAPIKey:              os.Getenv("MCP_API_KEY"),
+		MCPBackendURL:          getEnv("MCP_BACKEND_URL", "http://organizerserver:3000"),
+		MCPBackendObsidianURL:  getEnv("MCP_BACKEND_OBSIDIAN_URL", "http://mcp-obsidian:3000"),
+		ExpectedAudience:       getEnv("EXPECTED_AUDIENCE", "https://alanhoangnguyen.com/mcp"),
+		RequiredScopes:         scopes,
+		JWKSCacheTTL:           jwksCacheTTL,
+		LogLevel:               getEnv("LOG_LEVEL", "INFO"),
 	}
 }
 
@@ -311,10 +313,20 @@ func (v *JWTValidator) jwtMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// getBackendURL determines the backend URL based on the request path
+func (v *JWTValidator) getBackendURL(path string) string {
+	// Route /mcp/obsidian to the obsidian backend
+	if strings.HasPrefix(path, "/mcp/obsidian") {
+		return v.config.MCPBackendObsidianURL + "/mcp"
+	}
+	// Default: route to inventory/organizerserver backend
+	return v.config.MCPBackendURL + path
+}
+
 // Proxy handler
 func (v *JWTValidator) proxyHandler(w http.ResponseWriter, r *http.Request) {
-	// Build backend URL
-	backendURL := v.config.MCPBackendURL + r.URL.Path
+	// Build backend URL based on path routing
+	backendURL := v.getBackendURL(r.URL.Path)
 	if r.URL.RawQuery != "" {
 		backendURL += "?" + r.URL.RawQuery
 	}
@@ -436,6 +448,11 @@ func main() {
 	mux.HandleFunc("/health", validator.healthHandler)
 
 	// Protected MCP endpoints
+	// Streamable HTTP (current MCP transport - single endpoint)
+	mux.Handle("/mcp", validator.jwtMiddleware(http.HandlerFunc(validator.proxyHandler)))
+	// Obsidian MCP server (path-based routing to different backend)
+	mux.Handle("/mcp/obsidian", validator.jwtMiddleware(http.HandlerFunc(validator.proxyHandler)))
+	// Legacy SSE endpoints (kept for backward compatibility)
 	mux.Handle("/sse", validator.jwtMiddleware(http.HandlerFunc(validator.proxyHandler)))
 	mux.Handle("/messages/", validator.jwtMiddleware(http.HandlerFunc(validator.proxyHandler)))
 
@@ -443,7 +460,8 @@ func main() {
 	addr := ":" + config.Port
 	log.Printf("INFO: JWT Validator starting on %s", addr)
 	log.Printf("INFO: Keycloak issuer: %s", config.KeycloakIssuer)
-	log.Printf("INFO: MCP backend: %s", config.MCPBackendURL)
+	log.Printf("INFO: MCP backend (default): %s", config.MCPBackendURL)
+	log.Printf("INFO: MCP backend (obsidian): %s", config.MCPBackendObsidianURL)
 	log.Printf("INFO: Required scopes: %v", config.RequiredScopes)
 
 	if err := http.ListenAndServe(addr, mux); err != nil {
