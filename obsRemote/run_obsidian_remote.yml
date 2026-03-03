@@ -1,87 +1,21 @@
 services:
-  organizerserver:
-    image: registry.alanhoangnguyen.com/admin/organizerserver:${ORGANIZER_VERSION:-latest}
+  redis:
+    image: redis:7-alpine
+    container_name: conversationalist_redis
     restart: unless-stopped
-    environment:
-      - BASE_GIT_REPO_LOCATION=$BASE_GIT_REPO_LOCATION_CONTAINER
-      - GIT_TOKEN=$GIT_TOKEN
-      - GIT_USER=$GIT_USER
-      - GIT_SYNC_ENABLED=$GIT_SYNC_ENABLED
-      - NOTE_BASE_LOCATION=$NOTE_BASE_LOCATION_CONTAINER
-      - OBSIDIAN_VAULT_REPO_LOCATION=$OBSIDIAN_VAULT_REPO_LOCATION_CONTAINER
-      - MCP_TRANSPORT=streamable-http
-      - MCP_PORT=3000
-      - MCP_API_KEY=$MCP_API_KEY
-      - MCP_DNS_REBINDING_PROTECTION=$MCP_DNS_REBINDING_PROTECTION
-      - MCP_ALLOWED_HOSTS=$MCP_ALLOWED_HOSTS
-      - MCP_ALLOWED_ORIGINS=$MCP_ALLOWED_ORIGINS
-      - MCP_OAUTH_ENABLED=$MCP_OAUTH_ENABLED
-      - MCP_OAUTH_ISSUER=$MCP_OAUTH_ISSUER
-      - MCP_OAUTH_AUDIENCE=$MCP_OAUTH_AUDIENCE
-      - MCP_OAUTH_SCOPES=$MCP_OAUTH_SCOPES
-      - INVENTORY_API_BASE_URL=http://localhost:8080
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes:
-      - $OBSIDIAN_VAULT_LOCATION_HOST:$OBSIDIAN_VAULT_LOCATION_CONTAINER
-      - ~/.ssh:/root/.ssh:ro
-    networks:
-      - obsidian_network
+      - redis_data:/data
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8081/healthcheck"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
       retries: 3
-      start_period: 40s
-
-  updater:
-    image: happydance/updater:latest
-    environment:
-      - VAULT_LOCATION=/app/vault
-      - USERNAME=$GUSERNAME
-      - PASSWORD=$GPASSWORD
-      - TOKEN=$GTOKEN
-      - OUTPUT_PATH=/app/output
-    volumes:
-      - $OBSIDIAN_VAULTS:/app/vault
-
-  agent-server:
-    image: registry.alanhoangnguyen.com/admin/agent-server:${AGENT_VERSION:-latest}
-    restart: unless-stopped
-    environment:
-      - ORGANIZER_SERVER_URL=http://organizerserver:8080
-      - REST_ADDRESS=$AGENT_SERVER_REST_ADDRESS
-      - REST_PORT=$AGENT_SERVER_REST_PORT
-      - FIREWORKS_API_KEY=$FIREWORKS_API_KEY
-      - SCHEDULER_URL=http://scheduler:8080
-      - LLM_LOG_FILE=/app/logs/llm.log
-      - GENERAL_LOG_FILE=/app/logs/general.log
-      - LOG_LEVEL=DEBUG
-      - USER_ENCRYPTION_KEY=$USER_ENCRYPTION_KEY
-      - USER_DATA_PATH=/app/user
-      - FIREBASE_SERVICE_ACCOUNT_KEY_LOCATION=/app/firebase/FirebaseServiceAccountKey.json
-      - WS_HOST=$WS_HOST
-      - WS_PORT=$WS_PORT
-      - SPEECH_PAUSE_TIMEOUT_SEC=$SPEECH_PAUSE_TIMEOUT_SEC
-      - UNIFIED_STARTUP=$UNIFIED_STARTUP
-      - USE_MOCK_AGENT=$USE_MOCK_AGENT
-      - MODEL_COMMAND_PARSER=$MODEL_COMMAND_PARSER
-      - MODEL_CONFIRMATION_INTERPRETER=$MODEL_CONFIRMATION_INTERPRETER
-      - MODEL_CORRECTION_PROCESSOR=$MODEL_CORRECTION_PROCESSOR
-      - MODEL_CONTEXTUAL_CORRECTION_PROCESSOR=$MODEL_CONTEXTUAL_CORRECTION_PROCESSOR
-      - MODEL_FUNCTION_CREATOR=$MODEL_FUNCTION_CREATOR
-      - MODEL_JSON_FORMATTER=$MODEL_JSON_FORMATTER
-      - MODEL_REACT_PLAN=$MODEL_REACT_PLAN
-      - MODEL_REACT_EXIT_STRATEGY=$MODEL_REACT_EXIT_STRATEGY
-      - MODEL_REACT_OBSERVE=$MODEL_REACT_OBSERVE
-      - CONFIRM_TIMEOUT_SEC=$CONFIRM_TIMEOUT_SEC
-      - INVENTORY_API_BASE_URL=$INVENTORY_API_BASE_URL
-      - ENCRYPTION_PASSWORD=$ENCRYPTION_PASSWORD
-      - EXIT_ON_MODEL_VALIDATION_FAILURE=$EXIT_ON_MODEL_VALIDATION_FAILURE
-    volumes:
-      - ./agent-server/logs:/app/logs
-      - ./agent-server/user:/app/user
-      - ./agent-server/firebase:/app/firebase
-    ports:
-      - "127.0.0.1:${WS_PORT:-12346}:${WS_PORT:-12346}"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - obsidian_network
 
@@ -90,18 +24,48 @@ services:
     restart: unless-stopped
     environment:
       - FIREWORKS_API_KEY=$FIREWORKS_API_KEY
+      - DEPLOYMENT_MODE=${DEPLOYMENT_MODE:-gunicorn}
+      - REST_PORT=${REST_PORT:-8080}
+      - MAX_CONTEXT_LENGTH=${MAX_CONTEXT_LENGTH:-200}
+      - REDIS_URL=redis://redis:6379/0
+      - GUNICORN_WORKERS=${GUNICORN_WORKERS:-2}
+      - GUNICORN_THREADS=${GUNICORN_THREADS:-2}
+      - GUNICORN_TIMEOUT=${GUNICORN_TIMEOUT:-120}
+      - GUNICORN_WORKER_CLASS=${GUNICORN_WORKER_CLASS:-eventlet}
+      - GUNICORN_LOG_LEVEL=${GUNICORN_LOG_LEVEL:-info}
+      - GUNICORN_MAX_REQUESTS=${GUNICORN_MAX_REQUESTS:-1000}
+      - GUNICORN_MAX_REQUESTS_JITTER=${GUNICORN_MAX_REQUESTS_JITTER:-100}
+      - GUNICORN_KEEPALIVE=${GUNICORN_KEEPALIVE:-5}
+      - GUNICORN_GRACEFUL_TIMEOUT=${GUNICORN_GRACEFUL_TIMEOUT:-30}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      - redis
     networks:
       - obsidian_network
 
-  open-webui:
-    image: registry.alanhoangnguyen.com/admin/openwebui-monolithic:${OPENWEBUI_VERSION:-latest}
+  flofluent:
+    image: registry.alanhoangnguyen.com/admin/flofluent-monolithic:${FLOFLUENT_VERSION:-latest}
     restart: unless-stopped
     environment:
-      - OLLAMA_BASE_URL=http://conversationalist:8080
       - CONVERSATIONALIST_BASE_URL=http://conversationalist:8080
       - PUBLIC_CONVERSATIONALIST_BASE_URL=http://conversationalist:8080
       - API_KEY_ENCRYPTION_KEY=${API_KEY_ENCRYPTION_KEY}
+      - CONVERSATIONALIST_BASE_URL=http://conversationalist:8080
       - GOOGLE_TRANSLATE_API_KEY=${GOOGLE_TRANSLATE_API_KEY}
+      - EMAIL_PROVIDER=sendgrid
+      - EMAIL_FROM_ADDRESS=noreply@flofluent.com
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - PUBLIC_ENABLE_CHAT_HISTORY=${PUBLIC_ENABLE_CHAT_HISTORY:-true}
     volumes:
       - ./dev/open-webui:/app/backend/data
     networks:
@@ -324,13 +288,14 @@ services:
       - PORT=${JWT_VALIDATOR_PORT}
       - KEYCLOAK_ISSUER=https://auth.alanhoangnguyen.com/realms/mcp
       - KEYCLOAK_JWKS_URI=https://auth.alanhoangnguyen.com/realms/mcp/protocol/openid-connect/certs
-      - MCP_API_KEY=${MCP_API_KEY}
       - MCP_BACKEND_URL=http://organizerserver:3000
       - MCP_BACKEND_OBSIDIAN_URL=http://mcp-obsidian:3000
       - EXPECTED_AUDIENCE=https://alanhoangnguyen.com/mcp
       - REQUIRED_SCOPES=email,profile
       - JWKS_CACHE_TTL=${JWKS_CACHE_TTL_SECONDS}
       - LOG_LEVEL=${JWT_VALIDATION_LOG_LEVEL}
+      - MCP_API_KEY=${MCP_API_KEY}
+      - MCP_BACKEND_DAYPLANNER_URL=http://dayplanner-mcp:3000
     networks:
       - obsidian_network
     depends_on:
@@ -351,7 +316,7 @@ services:
     environment:
       - PORT=3000
       - ALLOWED_ORIGINS=*
-      - MCP_API_KEY=${MCP_API_KEY}
+      - MCP_API_KEY=${MCP_OBSIDIAN_API_KEY}
     volumes:
       - ${OBSIDIAN_VAULT_LOCATION_HOST}:${OBSIDIAN_VAULT_LOCATION_CONTAINER}
     networks:
@@ -363,5 +328,117 @@ services:
       retries: 3
       start_period: 5s
 
+  todo-infrastructure:
+    image: registry.alanhoangnguyen.com/admin/todo-infrastructure:${TODO_INFRA_VERSION:-latest}
+    container_name: todo-infrastructure
+    ports:
+      - "3002:3000"
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=${TODO_DATABASE_URL:-postgresql+asyncpg://postgres:postgres@todo-postgres:5432/todos}
+      - DATABASE_URL_SYNC=${TODO_DATABASE_URL_SYNC:-postgresql://postgres:postgres@todo-postgres:5432/todos}
+      - LOG_LEVEL=${TODO_LOG_LEVEL:-INFO}
+      - PORT=3001
+      - MCP_PORT=3000
+      - MCP_API_KEY=${MCP_TODO_API_KEY}
+    volumes:
+      - ./todo-infra-data/config:/app/config
+      - ./todo-infra-data/logs:/app/logs
+    networks:
+      - obsidian_network
+    depends_on:
+      - todo-postgres
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  todo-postgres:
+    image: postgres:15
+    container_name: todo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${TODO_POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${TODO_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${TODO_POSTGRES_DB:-todos}
+    volumes:
+      - ./todo-postgres-data:/var/lib/postgresql/data
+    networks:
+      - obsidian_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TODO_POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+
+  dayplanner-mcp:
+    image: registry.alanhoangnguyen.com/admin/dayplanner-mcp:${DAYPLANNER_VERSION:-latest}
+    container_name: dayplanner-mcp
+    restart: unless-stopped
+    environment:
+      - MCP_PORT=3000
+      - MCP_API_KEY=${MCP_TODO_API_KEY}
+      - NOTES_MCP_URL=http://mcp-obsidian:3000/mcp
+      - NOTES_MCP_API_KEY=${MCP_OBSIDIAN_API_KEY}
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./dayplanner-data/logs:/app/logs
+    networks:
+      - obsidian_network
+    stdin_open: true
+    tty: true
+
+
+  open-webui:
+    image: registry.alanhoangnguyen.com/admin/open-webui:${OPENWEBUI_VERSION:-latest}
+    container_name: open-webui
+    ports:
+      - "8089:8080"
+    restart: unless-stopped
+    environment:
+      # Security (REQUIRED)
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
+      - API_KEY_ENCRYPTION_KEY=${API_KEY_ENCRYPTION_KEY}
+      - CONVERSATIONALIST_BASE_URL=http://conversationalist:8080
+      - WEBUI_AUTH=${WEBUI_AUTH:-True}
+      - NO_AUTH_ADMIN_EMAIL=${NO_AUTH_ADMIN_EMAIL:-admin@localhost}
+      - NO_AUTH_ADMIN_PASSWORD=${NO_AUTH_ADMIN_PASSWORD}
+
+      # Fireworks AI Configuration
+      - OPENAI_API_BASE_URLS=https://api.fireworks.ai/inference/v1
+      - OPENAI_API_KEYS=${FIREWORKS_API_KEY}
+      - DEFAULT_MODEL=${DEFAULT_MODEL:-accounts/fireworks/models/kimi-k2-instruct-0905}
+
+      # MCP Server Configuration
+      - TOOL_SERVER_CONNECTIONS=${TOOL_SERVER_CONNECTIONS:-[]}
+
+      # General Settings
+      - ENABLE_SIGNUP=False
+      - DEFAULT_LOCALE=en-US
+      - CORS_ALLOW_ORIGIN=${CORS_ALLOW_ORIGIN:-*}
+
+      # Use existing infrastructure
+
+    volumes:
+      - ./open-webui-data:/app/backend/data
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+    networks:
+      - obsidian_network
+
+
 networks:
   obsidian_network:
+
+volumes:
+  redis_data:
